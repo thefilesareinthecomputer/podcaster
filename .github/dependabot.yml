@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # One grouped PR per run, so lockfile bumps do not conflict with each other.
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      uv:
+        patterns: ["*"]
+
+  # Keeps the SHA-pinned actions in .github/workflows current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

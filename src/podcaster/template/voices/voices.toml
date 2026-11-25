@@ -1,0 +1,17 @@
+# The voice pool. One table per voice id: a description the writer can read, and the per-engine
+# keys a host needs. A host picks one with `voice = "<id>"` in config.toml and may override any key.
+# Clip paths are relative to this folder. Clips themselves are gitignored.
+
+[warm-reader]
+description = "warm, mid-pitch, unhurried; sounds like the one who has read everything"
+kokoro_voice = "af_heart"
+apple_voice = "Evan (Enhanced)"
+higgs_ref_audio = "s1.wav"
+higgs_ref_text = "This is a short reference clip for the first host, read plainly, at an even pace, in one take."
+
+[quick-skeptic]
+description = "lighter, quicker, a little dry; the one who asks what the record actually shows"
+kokoro_voice = "af_nicole"
+apple_voice = "Zoe (Premium)"
+higgs_ref_audio = "s2.wav"
+higgs_ref_text = "This is a short reference clip for the second host, read plainly, at an even pace, in one take."

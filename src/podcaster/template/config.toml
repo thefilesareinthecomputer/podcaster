@@ -1,0 +1,119 @@
+# podcaster configuration. This is the only file to edit for tuning.
+# Known-good kokoro voice ids and their model-card grades are listed in README.md.
+#
+# Relative paths here resolve against this file's own folder, which is the show root: the
+# folder holding in/, prompts/, voices/, scripts/ and out/. Without --show that root is this
+# repo. Two exceptions, marked below, ship with the code rather than the show.
+
+[episode]
+default = "A"                     # episode name used in script and output file names
+format = "deep-dive"              # one of the [formats.*] tables below; --format overrides per run
+target_minutes = 27               # the fixed length strategy's target when no format applies
+words_per_minute = 150            # word budget = minutes * this, scaled by --length short|default|long (0.5, 1, 1.6)
+
+# A format is an order the writer follows, a host count and a length. Add a table for a new one.
+# A mode picks the brief, the length strategy and the gates; a format picks the shape.
+[formats.deep-dive]
+hosts = 2
+minutes = 27
+structure = ["open on a scene", "the record", "what was expected versus what happened", "what to do", "pay off the spine"]
+
+[formats.brief]
+hosts = 1
+minutes = 4
+structure = ["the one thing", "why it matters", "what to do"]
+
+[formats.critique]
+hosts = 2
+minutes = 15
+structure = ["each host's stance on the spine", "the strongest evidence for each", "where the record decides it", "what each host gives up", "pay off the spine"]
+
+[formats.debate]
+hosts = 2
+minutes = 20
+structure = ["opening stances", "the evidence, host by host", "concessions", "closing, spine paid off"]
+
+[sources]
+max_words = 20000                 # the writer's material is cut here with a visible marker; .md .txt .pdf .html and .url files
+
+[gate]                            # structural checks run before the slop linter; failures exit 12
+# The outline (`# q:` lines after the spine) is asked for by prompts/rules.md and used by
+# [render.gaps] to place section pauses, but it is not universal: a digest or a short script
+# reasonably has none, and the briefing brief has never asked for one. Off by default so a
+# script written to either branch's rules renders; turn it on for a show whose briefs all
+# require an outline. A per-mode version of this, alongside the rubric weights, is planned.
+require_outline = false
+min_turn_share = 0.3              # each host holds at least this share of turns
+max_turn_words = 120              # longer turns break pacing and TTS chunking
+banned_artifacts = ["as an AI", "language model"]
+
+# A host names a voice from voices/voices.toml; any per-engine key set here overrides the pool entry.
+# Per-engine keys: kokoro_voice, apple_voice, higgs_ref_audio (5 to 15s clean mono clip) and higgs_ref_text (its transcript).
+# A host may also set engine = "higgs" to render on a different engine from the other host; the
+# preflight then asks for both models at once, so both have to fit in free memory.
+[hosts.s1]
+name = "host"
+voice = "warm-reader"
+speed = 1.0
+
+[hosts.s2]
+name = "guest"
+voice = "quick-skeptic"
+speed = 1.0
+
+[writer]
+default = "manual"                # manual | mlx_lm
+rules = "prompts/rules.md"        # shared rules: format, citations, address, voice for the ear
+s1 = "prompts/s1.md"              # persona prompt for the first host
+s2 = "prompts/s2.md"              # persona prompt for the second host
+# No brief key here: the brief comes from [modes.<name>].brief for the resolved mode.
+# mlx_lm is parked: the plumbing works, this model's scripts do not hold up. Swap the id when
+# a better local model fits in 64GB or a fine-tune exists; nothing else has to change.
+mlx_lm_model = "mlx-community/Qwen3.8-27B-OptiQ-4bit"
+max_turn_tokens = 400             # cap per generated turn
+max_context_tokens = 32000        # per-host context ceiling; the run stops rather than grow the cache past it
+enable_thinking = false           # reasoning blocks eat the turn cap and are stripped anyway; leave off
+mode = "alternate"                # alternate: hosts trade turns live | compile: outline, each host answers, an editor pass compiles
+compile_tokens = 6000             # token cap for the compile pass
+temperature = 0.8                 # sampling temperature for the local writer
+
+[mode]
+default = "briefing"              # used when --mode is omitted
+
+[modes.briefing]
+brief = "prompts/briefs/briefing.md"
+
+[modes.digest]
+brief = "prompts/briefs/digest.md"
+floor_words = 600                 # scaled: never shorter than this
+ceiling_words = 4050              # scaled: never longer than this (27 min at 150 wpm)
+words_per_source_word = 0.5       # scaled: budget = clamp(source_words * ratio, floor, ceiling)
+
+[modes.synthesis]
+# no brief yet: modes.load("synthesis") raises ModeUnavailable
+
+[modes.study-review]
+# no brief yet: modes.load("study-review") raises ModeUnavailable
+
+[render]
+engine_default = "kokoro"         # apple | kokoro; higgs needs 24GB free
+# Model ids stay pinned and resolve through the default Hugging Face cache
+# (~/.cache/huggingface). Never set HF_HOME, cache_dir, or a snapshot_download
+# target in this repo, and never switch to another repo variant of the same
+# model: either one triggers a second multi-GB download of weights the machine
+# already has.
+kokoro_model = "mlx-community/Kokoro-82M-bf16"
+higgs_model = "mlx-community/higgs-audio-v2-3B-mlx-q8"
+sample_rate = 24000               # kokoro output rate; apple output is resampled to this
+mp3_bitrate = "96k"
+apple_rate_wpm = 175              # `say -r`, words per minute
+preflight_headroom_gb = 1.0       # free memory the preflight insists on beyond the estimated need
+
+# Silence before a turn, by what the boundary is. This table has to come last in [render]:
+# every key after it belongs to it, which is how mp3_bitrate and apple_rate_wpm ended up
+# inside the gaps table on the branch this came from.
+[render.gaps]
+default_ms = 350
+after_question_ms = 200           # a question invites a fast reply
+section_ms = 900                  # before a turn that opens a new `# q:` placed inline in the script
+closing_ms = 700                  # before each of the last two turns

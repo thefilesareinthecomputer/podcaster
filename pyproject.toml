@@ -1,0 +1,23 @@
+[project]
+name = "podcaster"
+version = "0.2.0"
+description = "Local two-host podcast generator for Apple Silicon: script, slop gate, render."
+requires-python = ">=3.12,<3.13"
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = [
+    "mlx-audio>=0.5.4,<0.6",
+    "misaki[en]>=0.9",   # Kokoro's text-to-phoneme step; an optional extra of mlx-audio that Kokoro cannot run without
+    "pypdf>=5,<7",       # PDF page text for in/ (BSD-3)
+    "trafilatura>=2,<3", # main text from HTML and fetched URLs for in/ (Apache-2.0)
+]
+
+[project.optional-dependencies]
+mlx_lm = ["mlx-lm>=0.31,<0.32"]   # the local two-persona writer; needs 24GB free
+
+[project.scripts]
+podgen = "podcaster.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.11.19,<0.12"]
+build-backend = "uv_build"
