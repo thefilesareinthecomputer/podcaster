@@ -20,6 +20,7 @@ LOCK_FILE = Path.home() / ".podcaster.lock"
 EXIT_BUSY = 11  # 6 is the rubric gate; every code render.py returns has one meaning
 MLX_MEMORY_FRACTION = 0.75  # cap mlx at this share of physical memory so an overrun raises instead of swapping
 MLX_CACHE_GB = 4  # freed Metal buffers mlx may keep; measured: uncapped, a 3B TTS model held 50GB
+HEADROOM_GB = 1.0  # free memory insisted on beyond a model's resident estimate; render.py's preflight reads its own from config
 
 # Absolute, not PATH-resolved: these two decide whether a model is allowed to load, so an
 # earlier entry on PATH must not be able to answer for them.

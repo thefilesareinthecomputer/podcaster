@@ -1,9 +1,7 @@
-# podcaster configuration. This is the only file to edit for tuning.
-# Known-good kokoro voice ids and their model-card grades are listed in README.md.
+# podcaster show configuration. Voices themselves live in voices/voices.toml.
 #
 # Relative paths here resolve against this file's own folder, which is the show root: the
-# folder holding in/, prompts/, voices/, scripts/ and out/. Without --show that root is this
-# repo. Two exceptions, marked below, ship with the code rather than the show.
+# folder holding in/, prompts/, voices/, scripts/ and out/.
 
 [episode]
 default = "A"                     # episode name used in script and output file names
@@ -96,7 +94,7 @@ words_per_source_word = 0.5       # scaled: budget = clamp(source_words * ratio,
 # no brief yet: modes.load("study-review") raises ModeUnavailable
 
 [render]
-engine_default = "kokoro"         # apple | kokoro; higgs needs 24GB free
+engine_default = "kokoro"         # apple | kokoro | higgs (higgs needs a 24GB machine)
 # Model ids stay pinned and resolve through the default Hugging Face cache
 # (~/.cache/huggingface). Never set HF_HOME, cache_dir, or a snapshot_download
 # target in this repo, and never switch to another repo variant of the same

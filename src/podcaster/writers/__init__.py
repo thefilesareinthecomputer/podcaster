@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from typing import Mapping
 
 from podcaster.engines import machine_memory_gb
-from podcaster.guard import require_free_memory
+from podcaster.guard import HEADROOM_GB, require_free_memory
 
 
 class WriterUnavailable(RuntimeError):
@@ -122,19 +122,20 @@ def available_on_this_machine(memory_gb: int | None = None) -> list[str]:
 def load(name: str, memory_gb: int | None = None, free_gb: float | None = None):
     """Return the writer module, or raise WriterUnavailable with a plain reason.
 
-    Checks installed memory against the writer's minimum, then memory that is free right now,
-    so a second model never loads next to a resident one."""
+    Checks installed memory against the writer's minimum machine size, then that the writer's
+    resident estimate plus headroom is free right now, so a second model never loads next to a
+    resident one. The write step has no preflight of its own, so this is its only memory check."""
     if name not in WRITERS:
         raise WriterUnavailable(f"unknown writer {name!r}; choose from {', '.join(WRITERS)}")
     spec = WRITERS[name]
     mem = machine_memory_gb() if memory_gb is None else memory_gb
     if spec.min_memory_gb > mem:
         raise WriterUnavailable(
-            f"{name} needs about {spec.min_memory_gb}GB unified memory and this machine reports {mem}GB. {spec.note}."
+            f"{name} needs a machine with about {spec.min_memory_gb}GB unified memory and this one has {mem}GB. {spec.note}."
         )
-    if spec.min_memory_gb:
+    if spec.resident_gb:
         try:
-            require_free_memory(spec.min_memory_gb, f"writer {name}", free_gb=free_gb)
+            require_free_memory(spec.resident_gb + HEADROOM_GB, f"writer {name}", free_gb=free_gb)
         except MemoryError as e:
             raise WriterUnavailable(str(e)) from e
     return importlib.import_module(spec.module)
