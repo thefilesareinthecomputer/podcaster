@@ -51,7 +51,8 @@ layer. No subject names, personal references, voice ids or prompt text in code.
 
 ## Ask first
 
-- Any dependency beyond mlx-audio, pypdf, trafilatura and the optional mlx-lm.
+- Any dependency beyond mlx-audio, misaki, spaCy's en_core_web_sm, pypdf, trafilatura and the
+  optional mlx-lm.
 - Changing the `[S1]`/`[S2]` tag format.
 - Adding an RSS, upload or hosting step.
 - Pulling a model outside the Hugging Face `mlx-community` namespace.
