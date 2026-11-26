@@ -5,6 +5,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # A release has to be a week old before it is proposed, past the usual window in which a
+    # compromised upload is caught and pulled.
+    cooldown:
+      default-days: 7
     groups:
       uv:
         patterns: ["*"]
@@ -14,3 +18,5 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7

@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from podcaster import paths, render
 
@@ -42,6 +43,15 @@ class SlopGate(unittest.TestCase):
         self.assertTrue(ok)
         self.assertIn("slop gate skipped: no linter at /nonexistent/slop_check.py", report)
         self.assertIn("the render proceeds without the mechanical slop check", report)
+
+    def test_a_linter_that_hangs_fails_the_gate_instead_of_holding_the_lock(self):
+        with tempfile.TemporaryDirectory() as d:
+            stuck = Path(d) / "stuck.py"
+            stuck.write_text("import time\ntime.sleep(30)\n")
+            with mock.patch.object(render, "SLOP_TIMEOUT_S", 0.5):
+                ok, report = render.slop_gate(Path(d) / "x.md", 100, checker=stuck)
+        self.assertFalse(ok)
+        self.assertIn("ran past", report)
 
 
 if __name__ == "__main__":

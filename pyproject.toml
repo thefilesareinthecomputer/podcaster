@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-mlx_lm = ["mlx-lm>=0.32.2,<0.33"]   # the local two-persona writer; needs 24GB free
+mlx_lm = ["mlx-lm>=0.32.2,<0.33"]   # the optional local writer; needs a 24GB machine, about 19GB free
 
 [project.scripts]
 podgen = "podcaster.cli:main"
