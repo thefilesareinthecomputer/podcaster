@@ -96,7 +96,7 @@ words_per_source_word = 0.5       # scaled: budget = clamp(source_words * ratio,
 # no brief yet: modes.load("study-review") raises ModeUnavailable
 
 [render]
-engine_default = "kokoro"         # apple | kokoro; higgs needs 24GB free
+engine_default = "kokoro"         # apple | kokoro | higgs (higgs needs a 24GB machine)
 # Model ids stay pinned and resolve through the default Hugging Face cache
 # (~/.cache/huggingface). Never set HF_HOME, cache_dir, or a snapshot_download
 # target in this repo, and never switch to another repo variant of the same
