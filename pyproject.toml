@@ -8,6 +8,10 @@ license-files = ["LICENSE"]
 dependencies = [
     "mlx-audio>=0.6.7,<0.7",
     "misaki[en]>=0.9.4",   # Kokoro's text-to-phoneme step; an optional extra of mlx-audio that Kokoro cannot run without
+    # spaCy's English model, which misaki tags words with. misaki would download it at first use
+    # through `uv pip install`, which fails under `uv tool install`; pinned here it installs with
+    # everything else, hashed in uv.lock. MIT, about 13MB.
+    "en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
     "pypdf>=7.1.1,<8",       # PDF page text for in/ (BSD-3)
     "trafilatura>=2.3.1,<3", # main text from HTML and fetched URLs for in/ (Apache-2.0)
 ]
