@@ -33,8 +33,9 @@ layer. No subject names, personal references, voice ids or prompt text in code.
   (`--show`, then `$PODGEN_SHOW`, then `~/podcasts/default`).
 - Engines and writers live in memory-gated registries (`engines/`, `writers/`), modes in
   `modes/`. New ones register there, never inside `pipeline.py` or `render.py`.
-- Relative paths in a show's config resolve against the show folder and are confined to it
-  and the home folder. The slop linter and the fixture are not configurable.
+- Relative paths in a show's config resolve against the show folder and are confined to it;
+  only `sources:` may also point anywhere under home. Model ids must be in `mlx-community/`.
+  The slop linter and the fixture are not configurable.
 - A script's `sources:` frontmatter is written `~/...` for anything under home and absolute
   otherwise. Never write a path relative to the working directory.
 - Six checks run before audio, each with its own exit code: structure (12), slop (3),

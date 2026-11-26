@@ -93,6 +93,34 @@ class Init(unittest.TestCase):
 
 
 class ShowRoot(unittest.TestCase):
+    def test_a_show_config_cannot_name_a_prompt_file_elsewhere_in_home(self):
+        # Allowing all of home would let a show someone else assembled read ~/.ssh/... into a brief.
+        with tempfile.TemporaryDirectory(dir=Path.home()) as outside, tempfile.TemporaryDirectory() as d:
+            secret = Path(outside) / "id_key"
+            secret.write_text("not for a brief\n")
+            show = Path(d)
+            (show / "config.toml").write_text(f'[writer]\nrules = "{secret}"\n')
+            with self.assertRaises(KeyError) as ctx:
+                render.load_config(show / "config.toml")
+            self.assertIn("writer.rules", str(ctx.exception))
+
+    def test_a_show_config_cannot_pull_a_model_outside_mlx_community(self):
+        with tempfile.TemporaryDirectory() as d:
+            show = Path(d)
+            (show / "config.toml").write_text('[render]\nkokoro_model = "someone/Kokoro-82M"\n')
+            with self.assertRaises(KeyError) as ctx:
+                render.load_config(show / "config.toml")
+            self.assertIn("mlx-community/", str(ctx.exception))
+
+    def test_init_does_not_write_through_a_dangling_symlink(self):
+        with tempfile.TemporaryDirectory() as d:
+            show, target = Path(d) / "show", Path(d) / "elsewhere.toml"
+            show.mkdir()
+            (show / "config.toml").symlink_to(target)
+            made = cli.init_show(show)
+            self.assertNotIn("config.toml", made)
+            self.assertFalse(target.exists())
+
     def test_relative_config_paths_resolve_against_the_show_folder(self):
         with tempfile.TemporaryDirectory() as d:
             show = Path(d)

@@ -155,7 +155,7 @@ Give each project its own show with `--show` or `$PODGEN_SHOW`. Any other exit c
 
 ## Troubleshooting
 
-- **`command not found: podgen`.** Run `uv tool update-shell`, then open a new terminal window.
+- **`command not found: podgen`.** Run `uv tool update-shell`, which adds uv's tool folder to the PATH in your shell's startup file, then open a new terminal window.
 - **Exit code 9, "no successful render recorded".** That engine hasn't rendered on this Mac yet. Run the command the message prints, which renders the sample script, then try again.
 - **Exit code 8: free memory is too low.** Close some apps, or use a lighter engine with `--engine apple`.
 - **Exit code 2, engine unavailable.** Your Mac has less memory than the engine needs. Higgs needs a 24 GB Mac.

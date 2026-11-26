@@ -20,6 +20,7 @@ import sys
 import time
 from typing import Callable
 
+from podcaster import guard
 from podcaster.guard import cap_mlx_memory
 from podcaster.script_format import OUTLINE
 from podcaster.writers import Brief, WriterUnavailable
@@ -283,7 +284,7 @@ def write(
     return proc.stdout
 
 
-MODEL_NAMESPACE = "mlx-community/"
+MODEL_NAMESPACE = guard.MODEL_NAMESPACE
 
 
 def _main() -> int:

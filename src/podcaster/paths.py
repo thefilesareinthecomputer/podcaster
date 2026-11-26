@@ -49,7 +49,8 @@ def init_show(target: Path, template: Path = TEMPLATE) -> list[str]:
     copies += [f"prompts/briefs/{p.name}" for p in sorted((template / "prompts" / "briefs").glob("*.md"))]
     for rel in copies:
         src, dst = template / rel, target / rel
-        if src.exists() and not dst.exists():
+        # is_symlink() too: a dangling link reports exists() False and copy2 would write through it.
+        if src.exists() and not dst.exists() and not dst.is_symlink():
             shutil.copy2(src, dst)
             made.append(rel)
     missing = [f"prompts/{n}" for n in PROMPT_FILES if not (target / "prompts" / n).exists()]

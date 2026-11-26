@@ -58,7 +58,8 @@ def confined(value: str, key: str, *roots: Path) -> str:
     not write.
 
     Absolute and `..` are allowed as spellings; where they land is what decides. A show's own
-    assets are confined to the show root and home, the two places material lives.
+    assets are confined to the show root. Sources are confined to the show root or home,
+    since notes live anywhere under home; see readable_sources().
     """
     candidate = Path(value).expanduser()
     resolved = (candidate if candidate.is_absolute() else roots[0] / candidate).resolve()
@@ -82,12 +83,20 @@ def load_config(path: Path) -> dict:
     with open(path, "rb") as fh:
         cfg = tomllib.load(fh)
     root = path.parent
+    # A show's own files stay inside the show. Allowing all of home would let a show someone
+    # else assembled name ~/.ssh/... as a prompt file and put it into the writer's brief.
     for table, key in PATH_KEYS:
         if table in cfg and key in cfg[table]:
-            cfg[table][key] = confined(cfg[table][key], f"{table}.{key}", root, Path.home())
+            cfg[table][key] = confined(cfg[table][key], f"{table}.{key}", root)
     for name, mode_cfg in cfg.get("modes", {}).items():
         if "brief" in mode_cfg:
-            mode_cfg["brief"] = confined(mode_cfg["brief"], f"modes.{name}.brief", root, Path.home())
+            mode_cfg["brief"] = confined(mode_cfg["brief"], f"modes.{name}.brief", root)
+    for key, model_id in cfg.get("render", {}).items():
+        if key.endswith("_model") and not str(model_id).startswith(guard.MODEL_NAMESPACE):
+            raise KeyError(
+                f"render.{key} = {model_id!r}: only {guard.MODEL_NAMESPACE}* models are pulled; "
+                "changing that is an ask-first decision in AGENTS.md"
+            )
     cfg["voices"] = load_voice_pool(root / "voices" / "voices.toml")
     for name, host in cfg.get("hosts", {}).items():
         if "voice" in host:
@@ -104,7 +113,7 @@ def load_config(path: Path) -> dict:
             host.update(merged)
         if "higgs_ref_audio" in host:
             host["higgs_ref_audio"] = confined(
-                host["higgs_ref_audio"], f"hosts.{name}.higgs_ref_audio", root, Path.home()
+                host["higgs_ref_audio"], f"hosts.{name}.higgs_ref_audio", root
             )
     cfg["_root"] = str(root)
     return cfg
@@ -334,6 +343,7 @@ def fixture_gate(
 
 
 SLOP_CHECK = paths.SLOP_CHECK
+SLOP_TIMEOUT_S = 60  # a long script lints in under a second; past this the linter is stuck
 HARD_CATEGORIES = {"symbol", "filler", "sycophancy", "meta", "hedge", "emoji"}
 CADENCE_WORDS_PER_HIT = 400  # more than one antithesis per 400 words fails
 
@@ -350,7 +360,17 @@ def slop_gate(script: Path, words: int, checker: Path = SLOP_CHECK) -> tuple[boo
             f"slop gate skipped: no linter at {checker}; "
             "the render proceeds without the mechanical slop check"
         )
-    proc = subprocess.run([sys.executable, str(checker), "--json", str(script)], capture_output=True, text=True)
+    try:
+        # The script text may come from any writer, and a pathological line could make the
+        # linter's regexes run for a very long time while this run holds the machine lock.
+        proc = subprocess.run(
+            [sys.executable, str(checker), "--json", str(script)],
+            capture_output=True,
+            text=True,
+            timeout=SLOP_TIMEOUT_S,
+        )
+    except subprocess.TimeoutExpired:
+        return False, f"slop gate: the linter ran past {SLOP_TIMEOUT_S}s on this script; treating it as a failure"
     try:
         findings = json.loads(proc.stdout or "[]")
     except json.JSONDecodeError:
