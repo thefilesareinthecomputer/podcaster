@@ -19,8 +19,11 @@ After that, nothing leaves your machine unless you opt in to fetching URLs.
 - [uv](https://docs.astral.sh/uv/).
 - `ffmpeg` on your PATH (`brew install ffmpeg`).
   The `apple` engine needs it for every render, and every engine needs it for mp3.
-- Free memory at render time: 8GB for Kokoro, 24GB for Higgs and for the optional local writer.
-  The gate checks free memory, not installed memory. The `apple` engine needs nothing extra.
+- Memory, two checks:
+  - Installed: 8GB for Kokoro, 24GB for Higgs and for the optional local writer.
+  - Free right now: each model's estimate plus 1GB of headroom, which is about 3GB for Kokoro,
+    17GB for Higgs and 19GB for the local writer.
+  The `apple` engine needs neither.
 - For the quickstart, the system voices "Evan (Enhanced)" and "Zoe (Premium)".
   Download them in System Settings > Accessibility > Spoken Content > System Voice > Manage Voices,
   or change `apple_voice` in your show's `voices/voices.toml`.
@@ -136,13 +139,14 @@ Your show's `prompts/rules.md` holds the full rules the writer follows.
 
 ## Engines
 
-| engine | what it is | free memory |
-|---|---|---|
-| `apple` | macOS `say` with installed system voices | none |
-| `kokoro` | Kokoro 82M via mlx-audio, about 300MB on first use | 8GB |
-| `higgs` | Higgs Audio v2 3B via mlx-audio, each host's voice cloned from a reference clip | 24GB |
+| engine | what it is | installed | free at render |
+|---|---|---|---|
+| `apple` | macOS `say` with installed system voices | any | none |
+| `kokoro` | Kokoro 82M via mlx-audio, about 300MB on first use | 8GB | about 3GB |
+| `higgs` | Higgs Audio v2 3B via mlx-audio, each host's voice cloned from a reference clip | 24GB | about 17GB |
 
-An engine whose memory need is not met refuses with a message naming what it needs.
+A machine below the installed size refuses the engine with exit code 2.
+Free memory is checked by the preflight just before audio, exit code 8.
 
 ## Voices
 
@@ -198,7 +202,7 @@ each gate's result, and script metrics.
 
 `uv tool install -e '.[mlx_lm]'` adds the `mlx_lm` writer,
 which writes the script on-device with a 4-bit model.
-It needs 24GB free and works, but its scripts are not yet good enough to replace `manual`.
+It needs a 24GB machine with about 19GB free, and it works, but its scripts are not yet good enough to replace `manual`.
 
 ## Development
 

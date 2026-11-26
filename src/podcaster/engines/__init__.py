@@ -7,7 +7,6 @@ import subprocess
 from dataclasses import dataclass
 
 from podcaster import guard
-from podcaster.guard import require_free_memory
 
 
 class EngineUnavailable(RuntimeError):
@@ -55,21 +54,18 @@ def available_on_this_machine(memory_gb: int | None = None) -> list[str]:
     return [name for name, spec in ENGINES.items() if spec.min_memory_gb <= mem]
 
 
-def load(name: str, memory_gb: int | None = None, free_gb: float | None = None):
+def load(name: str, memory_gb: int | None = None):
     """Return the engine module, or raise EngineUnavailable with a plain reason.
 
-    Checks installed memory against the engine's minimum, then memory that is free right now."""
+    Checks installed memory against the engine's minimum machine size. Free memory is not
+    checked here: importing the module loads no weights, and render.py's preflight checks free
+    memory against every engine's `resident_gb` plus headroom before the first turn renders."""
     if name not in ENGINES:
         raise EngineUnavailable(f"unknown engine {name!r}; choose from {', '.join(ENGINES)}")
     spec = ENGINES[name]
     mem = machine_memory_gb() if memory_gb is None else memory_gb
     if spec.min_memory_gb > mem:
         raise EngineUnavailable(
-            f"{name} needs about {spec.min_memory_gb}GB unified memory and this machine reports {mem}GB. {spec.note}."
+            f"{name} needs a machine with about {spec.min_memory_gb}GB unified memory and this one has {mem}GB. {spec.note}."
         )
-    if spec.min_memory_gb:
-        try:
-            require_free_memory(spec.min_memory_gb, f"engine {name}", free_gb=free_gb)
-        except MemoryError as e:
-            raise EngineUnavailable(str(e)) from e
     return importlib.import_module(spec.module)

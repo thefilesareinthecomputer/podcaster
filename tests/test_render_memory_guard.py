@@ -103,6 +103,17 @@ class Preflight(unittest.TestCase):
         self.assertIn("0.2GB free measured", report)
         self.assertIn("close other apps or pick a lighter engine", report)
 
+    def test_kokoro_fits_in_the_free_memory_a_busy_16gb_machine_has(self):
+        # About 6GB free is ordinary on a 16GB Mac with apps open; kokoro holds about 2GB.
+        with mock.patch.object(render, "free_memory_bytes", return_value=6 * render.GIB):
+            ok, report = render.preflight(engines.ENGINES["kokoro"], 3000, self.CFG)
+        self.assertTrue(ok, report)
+
+    def test_kokoro_is_refused_below_its_estimate_plus_headroom(self):
+        with mock.patch.object(render, "free_memory_bytes", return_value=int(2.5 * render.GIB)):
+            ok, _ = render.preflight(engines.ENGINES["kokoro"], 3000, self.CFG)
+        self.assertFalse(ok)
+
 
 class MainGuard(unittest.TestCase):
     def _run(self, engine_obj, free_bytes, out_dir):

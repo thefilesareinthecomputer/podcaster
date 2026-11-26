@@ -15,7 +15,7 @@ class Registry(unittest.TestCase):
     def test_higgs_refuses_on_16gb_naming_the_need(self):
         with self.assertRaises(engines.EngineUnavailable) as ctx:
             engines.load("higgs", memory_gb=16)
-        self.assertIn("needs about 24GB", str(ctx.exception))
+        self.assertIn("about 24GB", str(ctx.exception))
 
     def test_unknown_engine_names_the_choices(self):
         with self.assertRaises(engines.EngineUnavailable) as ctx:
